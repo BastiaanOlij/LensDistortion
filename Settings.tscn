@@ -1,0 +1,176 @@
+[gd_scene format=1]
+
+[node name="Settings" type="Node2D"]
+
+[node name="ScreenWidthLabel" type="Label" parent="."]
+
+focus/ignore_mouse = true
+focus/stop_mouse = true
+size_flags/horizontal = 2
+size_flags/vertical = 0
+margin/left = 386.0
+margin/top = 201.0
+margin/right = 534.0
+margin/bottom = 215.0
+text = "Width of screen in cms"
+percent_visible = 1.0
+lines_skipped = 0
+max_lines_visible = -1
+
+[node name="ScreenWidthText" type="LineEdit" parent="ScreenWidthLabel"]
+
+focus/ignore_mouse = false
+focus/stop_mouse = true
+size_flags/horizontal = 2
+size_flags/vertical = 2
+margin/left = 158.0
+margin/top = -5.0
+margin/right = 236.0
+margin/bottom = 19.0
+text = "10.5"
+placeholder/alpha = 0.6
+focus_mode = 2
+caret/caret_blink = false
+caret/caret_blink_speed = 0.65
+
+[node name="EyeDistLabel" type="Label" parent="."]
+
+focus/ignore_mouse = true
+focus/stop_mouse = true
+size_flags/horizontal = 2
+size_flags/vertical = 0
+margin/left = 386.0
+margin/top = 231.0
+margin/right = 534.0
+margin/bottom = 245.0
+text = "Eye distance to screen"
+percent_visible = 1.0
+lines_skipped = 0
+max_lines_visible = -1
+
+[node name="EyeDistText" type="LineEdit" parent="EyeDistLabel"]
+
+focus/ignore_mouse = false
+focus/stop_mouse = true
+size_flags/horizontal = 2
+size_flags/vertical = 2
+margin/left = 158.0
+margin/top = -5.0
+margin/right = 236.0
+margin/bottom = 19.0
+text = "8.0"
+placeholder/alpha = 0.6
+focus_mode = 2
+caret/caret_blink = false
+caret/caret_blink_speed = 0.65
+
+[node name="IPDLabel" type="Label" parent="."]
+
+focus/ignore_mouse = true
+focus/stop_mouse = true
+size_flags/horizontal = 2
+size_flags/vertical = 0
+margin/left = 386.0
+margin/top = 261.0
+margin/right = 534.0
+margin/bottom = 275.0
+text = "Interpupil distance"
+percent_visible = 1.0
+lines_skipped = 0
+max_lines_visible = -1
+
+[node name="IPDText" type="LineEdit" parent="IPDLabel"]
+
+focus/ignore_mouse = false
+focus/stop_mouse = true
+size_flags/horizontal = 2
+size_flags/vertical = 2
+margin/left = 158.0
+margin/top = -5.0
+margin/right = 236.0
+margin/bottom = 19.0
+text = "6.5"
+placeholder/alpha = 0.6
+focus_mode = 2
+caret/caret_blink = false
+caret/caret_blink_speed = 0.65
+
+[node name="K1Label" type="Label" parent="."]
+
+focus/ignore_mouse = true
+focus/stop_mouse = true
+size_flags/horizontal = 2
+size_flags/vertical = 0
+margin/left = 386.0
+margin/top = 289.0
+margin/right = 534.0
+margin/bottom = 303.0
+text = "K1"
+percent_visible = 1.0
+lines_skipped = 0
+max_lines_visible = -1
+
+[node name="K1Text" type="LineEdit" parent="K1Label"]
+
+focus/ignore_mouse = false
+focus/stop_mouse = true
+size_flags/horizontal = 2
+size_flags/vertical = 2
+margin/left = 158.0
+margin/top = -5.0
+margin/right = 236.0
+margin/bottom = 19.0
+text = "0.33"
+placeholder/alpha = 0.6
+focus_mode = 2
+caret/caret_blink = false
+caret/caret_blink_speed = 0.65
+
+[node name="K2Label" type="Label" parent="."]
+
+focus/ignore_mouse = true
+focus/stop_mouse = true
+size_flags/horizontal = 2
+size_flags/vertical = 0
+margin/left = 386.0
+margin/top = 320.0
+margin/right = 534.0
+margin/bottom = 334.0
+text = "K2"
+percent_visible = 1.0
+lines_skipped = 0
+max_lines_visible = -1
+
+[node name="K2Text" type="LineEdit" parent="K2Label"]
+
+focus/ignore_mouse = false
+focus/stop_mouse = true
+size_flags/horizontal = 2
+size_flags/vertical = 2
+margin/left = 158.0
+margin/top = -5.0
+margin/right = 236.0
+margin/bottom = 19.0
+text = "0.55"
+placeholder/alpha = 0.6
+focus_mode = 2
+caret/caret_blink = false
+caret/caret_blink_speed = 0.65
+
+[node name="Button" type="Button" parent="."]
+
+focus/ignore_mouse = false
+focus/stop_mouse = true
+size_flags/horizontal = 2
+size_flags/vertical = 2
+margin/left = 439.0
+margin/top = 361.0
+margin/right = 564.0
+margin/bottom = 381.0
+toggle_mode = false
+enabled_focus_mode = 2
+shortcut = null
+text = "Apply"
+flat = false
+
+
