@@ -36,9 +36,7 @@ shader/shader = SubResource( 1 )
 
 [node name="stereo_camera" parent="." instance=ExtResource( 1 )]
 
-k1 = 0.1
-k2 = 0.1
-upscale = 1.25
+prec_scale = 32.0
 
 [node name="Settings_Scene" parent="." instance=ExtResource( 2 )]
 
@@ -47,7 +45,7 @@ visibility/visible = false
 [node name="TestCube" type="TestCube" parent="."]
 
 _import_transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
-transform/local = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 4.25122, 1.37836, -20.2556 )
+transform/local = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2.06757, 1.37836, -8.27216 )
 layers = 1
 geometry/visible = true
 geometry/material_override = null
@@ -66,7 +64,7 @@ geometry/baked_light_tex_id = 0
 [node name="TestCube1" type="TestCube" parent="."]
 
 _import_transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
-transform/local = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1.21748, -2.05624, -23.236 )
+transform/local = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1.21748, -2.05624, -15.5666 )
 layers = 1
 geometry/visible = true
 geometry/material_override = null
@@ -85,7 +83,7 @@ geometry/baked_light_tex_id = 0
 [node name="TestCube2" type="TestCube" parent="."]
 
 _import_transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
-transform/local = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -5.06625, 3.05032, -20.8239 )
+transform/local = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -4.00106, 3.05032, -20.8239 )
 layers = 1
 geometry/visible = true
 geometry/material_override = null

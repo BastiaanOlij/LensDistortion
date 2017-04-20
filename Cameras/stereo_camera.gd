@@ -22,26 +22,37 @@ export var near = 0.1
 export var far = 200.0
 
 # upscale our FOV, we should be able to calculate this from our k1 and k2 constants 
-export var upscale = 1.1
+export var upscale = 1.0
+
+# world scale, 1.0 means 1 unit is 1 cm, 100.0 means 1 unit is 1 meter
+export var worldscale = 100.0
+
+# precision scale for storing our offsets, bump this up on mobile to 32 or 64, it limits the lens distortion we can handle.
+# need to figure out exactly what is causing our limit, looks like our render texture has less bits to store precision in...
+export var prec_scale = 2.0
 
 # some handy links
+var left_cam_pos = null
 var left_viewport = null
 var left_eye = null
 var left_lens_map = null
-var gen_left_lens = null
+var left_gen_lens = null
 var left_sprite = null
 
+var right_cam_pos = null
 var right_viewport = null
 var right_eye = null
 var right_lens_map = null
-var gen_right_lens = null
+var right_gen_lens = null
 var right_sprite = null
+
+var screen_divider = null
 
 func get_eye_distance():
 	return eyes_distance
 		
 func get_right_viewport_offset():
-	return get_node("ViewportSprite_right").get_offset().x
+	return right_sprite.get_offset().x
 	
 func update_cams():
 	# note, aspect ratio of our screen is applied later, this is an approximation not adjusting for lens distortion
@@ -59,21 +70,23 @@ func update_cams():
 	left_eye.set_frustum(left, right, top, -top, near, far)
 	right_eye.set_frustum(-right, -left, top, -top, near, far)
 
-	# set our offset (* 100.0 to get things in meters)
-	left_eye.set_h_offset(-eyes_distance / (2.0 * 100.0));
-	right_eye.set_h_offset(eyes_distance / (2.0 * 100.0));
+	# set our offset
+	left_cam_pos.set_translation(Vector3(-eyes_distance / (2.0 * worldscale), 0.0, 0.0))
+	right_cam_pos.set_translation(Vector3(eyes_distance / (2.0 * worldscale), 0.0, 0.0))
 	
 	# update our lens distortion
-	gen_left_lens.get_material().set_shader_param("screen_width_cm", lcd_width)
-	gen_left_lens.get_material().set_shader_param("ipd", eyes_distance)
-	gen_left_lens.get_material().set_shader_param("k1", k1)
-	gen_left_lens.get_material().set_shader_param("k2", k2)
+	left_gen_lens.get_material().set_shader_param("screen_width_cm", lcd_width)
+	left_gen_lens.get_material().set_shader_param("ipd", eyes_distance)
+	left_gen_lens.get_material().set_shader_param("k1", k1)
+	left_gen_lens.get_material().set_shader_param("k2", k2)
+	left_gen_lens.get_material().set_shader_param("prec_scale", prec_scale)
 	left_lens_map.set_render_target_update_mode(Viewport.RENDER_TARGET_UPDATE_ONCE)
 
-	gen_right_lens.get_material().set_shader_param("screen_width_cm", lcd_width)
-	gen_right_lens.get_material().set_shader_param("ipd", eyes_distance)
-	gen_right_lens.get_material().set_shader_param("k1", k1)
-	gen_right_lens.get_material().set_shader_param("k2", k2)
+	right_gen_lens.get_material().set_shader_param("screen_width_cm", lcd_width)
+	right_gen_lens.get_material().set_shader_param("ipd", eyes_distance)
+	right_gen_lens.get_material().set_shader_param("k1", k1)
+	right_gen_lens.get_material().set_shader_param("k2", k2)
+	right_gen_lens.get_material().set_shader_param("prec_scale", prec_scale)
 	right_lens_map.set_render_target_update_mode(Viewport.RENDER_TARGET_UPDATE_ONCE)	
 	
 func set_camera(p_eye_distance, p_lcd_width, p_lcd_dist, p_k1, p_k2):
@@ -95,48 +108,58 @@ func resize():
 	var aspect = target_size.x / target_size.y
 	
 	# set our lensmap size
-	gen_left_lens.get_material().set_shader_param("aspect_ratio", aspect)
-	gen_left_lens.set_scale(target_size)
+	left_gen_lens.get_material().set_shader_param("aspect_ratio", aspect)
+	left_gen_lens.set_scale(target_size)
 	left_lens_map.set_rect(Rect2(Vector2(0,0),target_size))
 	left_lens_map.set_render_target_update_mode(Viewport.RENDER_TARGET_UPDATE_ONCE)
 	var lens_texture = left_lens_map.get_render_target_texture()
-	get_node("ViewportSprite_left").get_material().set_shader_param("offsetmap", lens_texture)
-	get_node("ViewportSprite_left").get_material().set_shader_param("upscale", upscale)
+	left_sprite.get_material().set_shader_param("offsetmap", lens_texture)
+	left_sprite.get_material().set_shader_param("upscale", upscale)
+	left_sprite.get_material().set_shader_param("prec_scale", prec_scale)
 
-	gen_right_lens.get_material().set_shader_param("aspect_ratio", aspect)
-	gen_right_lens.set_scale(target_size)
+	right_gen_lens.get_material().set_shader_param("aspect_ratio", aspect)
+	right_gen_lens.set_scale(target_size)
 	right_lens_map.set_rect(Rect2(Vector2(0,0),target_size))
 	right_lens_map.set_render_target_update_mode(Viewport.RENDER_TARGET_UPDATE_ONCE)
 	lens_texture = right_lens_map.get_render_target_texture()
-	get_node("ViewportSprite_right").set_pos(Vector2(target_size.x,0))
-	get_node("ViewportSprite_right").get_material().set_shader_param("offsetmap", lens_texture)
-	get_node("ViewportSprite_right").get_material().set_shader_param("upscale", upscale)
+	right_sprite.set_pos(Vector2(target_size.x,0))
+	right_sprite.get_material().set_shader_param("offsetmap", lens_texture)
+	right_sprite.get_material().set_shader_param("upscale", upscale)
+	right_sprite.get_material().set_shader_param("prec_scale", prec_scale)
 	
 	# set our render buffer sizes
 	# note, we should upscale this using upscale however there is a bug in Godot 2.x
 	# that prevents us from doing so:
 	# https://github.com/godotengine/godot/issues/8383
 	# In Godot 3.x we can change this
-	get_node("Viewport_left").set_rect(Rect2(Vector2(0,0),target_size)) # target_size * upscale
-	get_node("Viewport_right").set_rect(Rect2(Vector2(0,0),target_size)) # target_size * upscale
+	left_viewport.set_rect(Rect2(Vector2(0,0),target_size)) # target_size * upscale
+	right_viewport.set_rect(Rect2(Vector2(0,0),target_size)) # target_size * upscale
 	
 	# and set our viewport scale
-	get_node("ViewportSprite_left").set_scale(Vector2(1.0, 1.0))
-	get_node("ViewportSprite_right").set_scale(Vector2(1.0, 1.0))
+	left_sprite.set_scale(Vector2(1.0, 1.0))
+	right_sprite.set_scale(Vector2(1.0, 1.0))
+	
+	# finally set our screen divider
+	screen_divider.set_pos(Vector2(target_size.x, 0.0))
+	screen_divider.set_scale(Vector2(1.0,target_size.y))
 
 func _ready():
 	# get our eyes for easy access
+	left_cam_pos = get_node("left_camera_pos")
 	left_viewport = get_node("Viewport_left")
 	left_eye = get_node("Viewport_left/Camera_left")
 	left_lens_map = get_node("Viewport_left_lensmap")
-	gen_left_lens = get_node("Viewport_left_lensmap/Generate_left_lens")
+	left_gen_lens = get_node("Viewport_left_lensmap/Generate_left_lens")
 	left_sprite = get_node("ViewportSprite_left")
 
+	right_cam_pos = get_node("right_camera_pos")
 	right_viewport = get_node("Viewport_right")
 	right_eye = get_node("Viewport_right/Camera_right")
 	right_lens_map = get_node("Viewport_right_lensmap")
-	gen_right_lens = get_node("Viewport_right_lensmap/Generate_right_lens")
+	right_gen_lens = get_node("Viewport_right_lensmap/Generate_right_lens")
 	right_sprite = get_node("ViewportSprite_right")
+	
+	screen_divider = get_node("ScreenDivider")
 
 	# update our buffer sizes
 	resize()
@@ -152,7 +175,6 @@ func _ready():
 	# make sure we get process updates
 	set_process(true)
 
-func _process(delta):	
-	var transform = get_global_transform()
-	left_eye.set_global_transform(transform)
-	right_eye.set_global_transform(transform)
+func _process(delta):
+	left_eye.set_global_transform(left_cam_pos.get_global_transform())
+	right_eye.set_global_transform(right_cam_pos.get_global_transform())

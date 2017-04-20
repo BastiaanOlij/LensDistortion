@@ -16,6 +16,7 @@ uniform float screen_width_cm = 10.5;
 uniform float ipd = 6.5;
 uniform float k1 = 0.22;
 uniform float k2 = 0.24;
+uniform float prec_scale = 2.0;
 
 vec2 coords = (UV * vec2(2.0)) - vec2(1.0);
 vec2 eye_center = vec2(((-ipd / 2.0) + (screen_width_cm / 4.0)) / (screen_width_cm / 2.0), 0.0);
@@ -46,7 +47,7 @@ offset = offset - coords;
 // low 8 bits get stored in r and g for x and y respectively
 // high 4 bits get combined for x and y into b
 // and all of that with floating point arithmatic.... 
-offset = clamp((offset * vec2(2.0)) + vec2(8.0), 0.0, 16.0); // -4.0 <-> 4.0 => 0.0 <-> 16.0
+offset = clamp((offset * vec2(prec_scale)) + vec2(8.0), 0.0, 16.0); // -4.0 <-> 4.0 => 0.0 <-> 16.0
 vec2 off_floor = floor(offset); // 12.345 => 12.0
 offset -= off_floor; // 12.345 => 0.345
 COLOR.r = offset.x;
@@ -65,11 +66,12 @@ COLOR.a = 1.0;
 
 shader/shader = SubResource( 1 )
 shader/shading_mode = 1
-shader_param/aspect_ratio = 0.889333
+shader_param/aspect_ratio = 0.829437
 shader_param/screen_width_cm = 10.5
 shader_param/ipd = 6.5
-shader_param/k1 = 0.22
-shader_param/k2 = 0.24
+shader_param/k1 = 0.01
+shader_param/k2 = 0.01
+shader_param/prec_scale = 2.0
 
 [sub_resource type="CanvasItemShader" id=3]
 
@@ -84,6 +86,7 @@ uniform float screen_width_cm = 10.5;
 uniform float ipd = 6.5;
 uniform float k1 = 0.22;
 uniform float k2 = 0.24;
+uniform float prec_scale = 2.0;
 
 vec2 coords = UV * vec2(2.0) - vec2(1.0);
 vec2 eye_center = vec2(((ipd / 2.0) - (screen_width_cm / 4.0)) / (screen_width_cm / 2.0), 0.0);
@@ -114,7 +117,7 @@ offset = offset - coords;
 // low 8 bits get stored in r and g for x and y respectively
 // high 4 bits get combined for x and y into b
 // and all of that with floating point arithmatic.... 
-offset = clamp((offset * vec2(2.0)) + vec2(8.0), 0.0, 16.0); // -4.0 <-> 4.0 => 0.0 <-> 16.0
+offset = clamp((offset * vec2(prec_scale)) + vec2(8.0), 0.0, 16.0); // -4.0 <-> 4.0 => 0.0 <-> 16.0
 vec2 off_floor = floor(offset); // 12.345 => 12.0
 offset -= off_floor; // 12.345 => 0.345
 COLOR.r = offset.x;
@@ -133,24 +136,26 @@ COLOR.a = 1.0;
 
 shader/shader = SubResource( 3 )
 shader/shading_mode = 0
-shader_param/aspect_ratio = 0.889333
+shader_param/aspect_ratio = 0.829437
 shader_param/screen_width_cm = 10.5
 shader_param/ipd = 6.5
-shader_param/k1 = 0.22
-shader_param/k2 = 0.24
+shader_param/k1 = 0.01
+shader_param/k2 = 0.01
+shader_param/prec_scale = 2.0
 
 [sub_resource type="CanvasItemShader" id=5]
 
 _code = {
 "fragment": "uniform texture offsetmap;
 uniform float upscale = 1.0;
+uniform float prec_scale = 2.0;
 
 vec4 normal;
 normal = tex(offsetmap, UV);
 
 // COLOR.b = ((offset.x * 16.0) + offset.y) / 255.0;
 normal.b *= 255.0; // 0.0 <-> 1.0 => 0 <-> 255
-vec2 offset = (vec2(normal.r + floor(normal.b / 16.0), normal.g + mod(normal.b, 16.0)) - vec2(8.0)) / vec2(2.0);
+vec2 offset = (vec2(normal.r + floor(normal.b / 16.0), normal.g + mod(normal.b, 16.0)) - vec2(8.0)) / vec2(prec_scale);
 vec2 coords = UV * vec2(2.0) - vec2(1.0);
 
 coords += offset;
@@ -160,7 +165,8 @@ if (coords.x < -1.0 || coords.y < -1.0 || coords.x > 1.0 || coords.y > 1.0) {
 } else {
 	coords = (coords + vec2(1.0)) / vec2(2.0);
 	COLOR = tex(TEXTURE, coords);
-};",
+};
+",
 "fragment_ofs": 0,
 "light": "",
 "light_ofs": 0,
@@ -173,19 +179,21 @@ if (coords.x < -1.0 || coords.y < -1.0 || coords.x > 1.0 || coords.y > 1.0) {
 shader/shader = SubResource( 5 )
 shader/shading_mode = 0
 shader_param/upscale = 1.0
+shader_param/prec_scale = 2.0
 
 [sub_resource type="CanvasItemShader" id=7]
 
 _code = {
 "fragment": "uniform texture offsetmap;
 uniform float upscale = 1.0;
+uniform float prec_scale = 2.0;
 
 vec4 normal;
 normal = tex(offsetmap, UV);
 
 // COLOR.b = ((offset.x * 16.0) + offset.y) / 255.0;
 normal.b *= 255.0; // 0.0 <-> 1.0 => 0 <-> 255
-vec2 offset = (vec2(normal.r + floor(normal.b / 16.0), normal.g + mod(normal.b, 16.0)) - vec2(8.0)) / vec2(2.0);
+vec2 offset = (vec2(normal.r + floor(normal.b / 16.0), normal.g + mod(normal.b, 16.0)) - vec2(8.0)) / vec2(prec_scale);
 vec2 coords = UV * vec2(2.0) - vec2(1.0);
 
 coords += offset;
@@ -209,6 +217,7 @@ if (coords.x < -1.0 || coords.y < -1.0 || coords.x > 1.0 || coords.y > 1.0) {
 shader/shader = SubResource( 7 )
 shader/shading_mode = 0
 shader_param/upscale = 1.0
+shader_param/prec_scale = 2.0
 
 [node name="stereo_camera" type="Spatial"]
 
@@ -217,15 +226,27 @@ script/script = ExtResource( 1 )
 eyes_distance = 6.5
 lcd_width = 10.5
 lcd_dist = 8.0
-k1 = 0.22
-k2 = 0.22
+k1 = 0.01
+k2 = 0.01
 near = 0.1
-far = 200.0
-upscale = 1.1
+far = 400.0
+upscale = 1.0
+worldscale = 100.0
+prec_scale = 32.0
+
+[node name="left_camera_pos" type="Spatial" parent="."]
+
+_import_transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
+transform/local = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0325, 0, 0 )
+
+[node name="right_camera_pos" type="Spatial" parent="."]
+
+_import_transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
+transform/local = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0325, 0, 0 )
 
 [node name="Viewport_left" type="Viewport" parent="."]
 
-rect = Rect2( 0, 0, 300, 400 )
+rect = Rect2( 0, 0, 1916, 2310 )
 own_world = false
 world = null
 transparent_bg = false
@@ -243,23 +264,24 @@ gui/disable_input = false
 [node name="Camera_left" type="Camera" parent="Viewport_left"]
 
 _import_transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
+transform/local = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0325, 0, 0 )
 projection = 2
-left = -0.28
-right = 0.46
-top = 0.375
-bottom = -0.375
-near = 0.1
-far = 100.0
+left = -0.25
+right = 0.40625
+top = 0.328125
+bottom = -0.328125
+near = 0.01
+far = 0.08
 keep_aspect = 0
 current = true
 visible_layers = 1048575
 environment = null
-h_offset = -0.003
+h_offset = 0.0
 v_offset = 0.0
 
 [node name="Viewport_right" type="Viewport" parent="."]
 
-rect = Rect2( 0, 0, 300, 400 )
+rect = Rect2( 0, 0, 1916, 2310 )
 own_world = false
 world = null
 transparent_bg = false
@@ -277,23 +299,24 @@ gui/disable_input = false
 [node name="Camera_right" type="Camera" parent="Viewport_right"]
 
 _import_transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
+transform/local = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0325, 0, 0 )
 projection = 2
-left = -0.46
-right = 0.28
-top = 0.375
-bottom = -0.375
-near = 0.1
-far = 100.0
+left = -0.40625
+right = 0.25
+top = 0.328125
+bottom = -0.328125
+near = 0.01
+far = 0.08
 keep_aspect = 0
 current = true
 visible_layers = 1048575
 environment = null
-h_offset = 0.003
+h_offset = 0.0
 v_offset = 0.0
 
 [node name="Viewport_left_lensmap" type="Viewport" parent="."]
 
-rect = Rect2( 0, 0, 300, 400 )
+rect = Rect2( 0, 0, 1916, 2310 )
 own_world = false
 world = null
 transparent_bg = false
@@ -311,12 +334,13 @@ gui/disable_input = false
 [node name="Generate_left_lens" type="Sprite" parent="Viewport_left_lensmap"]
 
 material/material = SubResource( 2 )
+transform/scale = Vector2( 1916, 2310 )
 texture = ExtResource( 2 )
 centered = false
 
 [node name="Viewport_right_lensmap" type="Viewport" parent="."]
 
-rect = Rect2( 0, 0, 300, 400 )
+rect = Rect2( 0, 0, 1916, 2310 )
 own_world = false
 world = null
 transparent_bg = false
@@ -334,6 +358,7 @@ gui/disable_input = false
 [node name="Generate_right_lens" type="Sprite" parent="Viewport_right_lensmap"]
 
 material/material = SubResource( 4 )
+transform/scale = Vector2( 1916, 2310 )
 texture = ExtResource( 2 )
 centered = false
 
@@ -346,8 +371,15 @@ centered = false
 [node name="ViewportSprite_right" type="ViewportSprite" parent="."]
 
 material/material = SubResource( 8 )
-transform/pos = Vector2( 500, 0 )
+transform/pos = Vector2( 1916, 0 )
 viewport = NodePath("../Viewport_right")
+centered = false
+
+[node name="ScreenDivider" type="Sprite" parent="."]
+
+transform/pos = Vector2( 1916, 0 )
+transform/scale = Vector2( 1, 2200 )
+texture = ExtResource( 2 )
 centered = false
 
 
