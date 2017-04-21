@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=1]
+[gd_scene load_steps=7 format=1]
 
 [ext_resource path="res://Cameras/stereo_camera.gd" type="Script" id=1]
 [ext_resource path="res://Cameras/white_dot.png" type="Texture" id=2]
@@ -6,17 +6,14 @@
 [sub_resource type="CanvasItemShader" id=1]
 
 _code = {
-"fragment": "// we build this for our left eye
-// code is based on samples for the original rift DK1 and DK2
-// http://rifty-business.blogspot.com.au/2013/08/understanding-oculus-rift-distortion.html
+"fragment": "// Distortion shader for our left eye
 
-// these defaults are for an iphone 7
-uniform float aspect_ratio = 667.0 / 750.0;
 uniform float screen_width_cm = 10.5;
 uniform float ipd = 6.5;
 uniform float k1 = 0.22;
 uniform float k2 = 0.24;
-uniform float prec_scale = 2.0;
+uniform float upscale = 1.0;
+float aspect_ratio = 667.0 / 750.0;
 
 vec2 coords = (UV * vec2(2.0)) - vec2(1.0);
 vec2 eye_center = vec2(((-ipd / 2.0) + (screen_width_cm / 4.0)) / (screen_width_cm / 2.0), 0.0);
@@ -36,24 +33,14 @@ offset *= distortion_scale;
 offset.y *= aspect_ratio;
 
 // add our eye center back in
-offset += eye_center;
-
-// and take the difference
-offset = offset - coords;
-
-// Since we don't have 16bit 2 color render buffers but an 8 bit 4 color buffer
-// we can't seem to use the alpha channel without issues
-// so we need to employ a bit of trickery, we're going to reserve 12 bits for the offset of each axis
-// low 8 bits get stored in r and g for x and y respectively
-// high 4 bits get combined for x and y into b
-// and all of that with floating point arithmatic.... 
-offset = clamp((offset * vec2(prec_scale)) + vec2(8.0), 0.0, 16.0); // -4.0 <-> 4.0 => 0.0 <-> 16.0
-vec2 off_floor = floor(offset); // 12.345 => 12.0
-offset -= off_floor; // 12.345 => 0.345
-COLOR.r = offset.x;
-COLOR.g = offset.y;
-COLOR.b = ((off_floor.x * 16.0) + off_floor.y) / 255.0; // 0 - 255 => 0.0 - 1.0
-COLOR.a = 1.0;
+coords = offset + eye_center;
+coords /= upscale;
+if (coords.x < -1.0 || coords.y < -1.0 || coords.x > 1.0 || coords.y > 1.0) {
+	COLOR = vec4(0.0, 0.0, 0.0, 1.0);
+} else {
+	coords = (coords + vec2(1.0)) / vec2(2.0);
+	COLOR = tex(TEXTURE, coords);
+};
 ",
 "fragment_ofs": 0,
 "light": "",
@@ -65,28 +52,24 @@ COLOR.a = 1.0;
 [sub_resource type="CanvasItemMaterial" id=2]
 
 shader/shader = SubResource( 1 )
-shader/shading_mode = 1
-shader_param/aspect_ratio = 0.829437
+shader/shading_mode = 0
 shader_param/screen_width_cm = 10.5
 shader_param/ipd = 6.5
-shader_param/k1 = 0.01
-shader_param/k2 = 0.01
-shader_param/prec_scale = 2.0
+shader_param/k1 = 0.22
+shader_param/k2 = 0.24
+shader_param/upscale = 1.0
 
 [sub_resource type="CanvasItemShader" id=3]
 
 _code = {
-"fragment": "// we build this for our right eye
-// code is based on samples for the original rift DK1 and DK2
-// http://rifty-business.blogspot.com.au/2013/08/understanding-oculus-rift-distortion.html
+"fragment": "// Distortion shader for our right eye
 
-// these defaults are for an iphone 7
-uniform float aspect_ratio = 667.0 / 750.0;
 uniform float screen_width_cm = 10.5;
 uniform float ipd = 6.5;
 uniform float k1 = 0.22;
 uniform float k2 = 0.24;
-uniform float prec_scale = 2.0;
+uniform float upscale = 1.0;
+float aspect_ratio = 667.0 / 750.0;
 
 vec2 coords = UV * vec2(2.0) - vec2(1.0);
 vec2 eye_center = vec2(((ipd / 2.0) - (screen_width_cm / 4.0)) / (screen_width_cm / 2.0), 0.0);
@@ -106,24 +89,14 @@ offset *= distortion_scale;
 offset.y *= aspect_ratio;
 
 // add our eye center back in
-offset += eye_center;
-
-// and take the difference
-offset = offset - coords;
-
-// Since we don't have 16bit 2 color render buffers but an 8 bit 4 color buffer
-// we can't seem to use the alpha channel without issues
-// so we need to employ a bit of trickery, we're going to reserve 12 bits for the offset of each axis
-// low 8 bits get stored in r and g for x and y respectively
-// high 4 bits get combined for x and y into b
-// and all of that with floating point arithmatic.... 
-offset = clamp((offset * vec2(prec_scale)) + vec2(8.0), 0.0, 16.0); // -4.0 <-> 4.0 => 0.0 <-> 16.0
-vec2 off_floor = floor(offset); // 12.345 => 12.0
-offset -= off_floor; // 12.345 => 0.345
-COLOR.r = offset.x;
-COLOR.g = offset.y;
-COLOR.b = ((off_floor.x * 16.0) + off_floor.y) / 255.0; // 0 - 255 => 0.0 - 1.0
-COLOR.a = 1.0;
+coords = offset + eye_center;
+coords /= upscale;
+if (coords.x < -1.0 || coords.y < -1.0 || coords.x > 1.0 || coords.y > 1.0) {
+	COLOR = vec4(0.0, 0.0, 0.0, 1.0);
+} else {
+	coords = (coords + vec2(1.0)) / vec2(2.0);
+	COLOR = tex(TEXTURE, coords);
+};
 ",
 "fragment_ofs": 0,
 "light": "",
@@ -136,88 +109,11 @@ COLOR.a = 1.0;
 
 shader/shader = SubResource( 3 )
 shader/shading_mode = 0
-shader_param/aspect_ratio = 0.829437
 shader_param/screen_width_cm = 10.5
 shader_param/ipd = 6.5
-shader_param/k1 = 0.01
-shader_param/k2 = 0.01
-shader_param/prec_scale = 2.0
-
-[sub_resource type="CanvasItemShader" id=5]
-
-_code = {
-"fragment": "uniform texture offsetmap;
-uniform float upscale = 1.0;
-uniform float prec_scale = 2.0;
-
-vec4 normal;
-normal = tex(offsetmap, UV);
-
-// COLOR.b = ((offset.x * 16.0) + offset.y) / 255.0;
-normal.b *= 255.0; // 0.0 <-> 1.0 => 0 <-> 255
-vec2 offset = (vec2(normal.r + floor(normal.b / 16.0), normal.g + mod(normal.b, 16.0)) - vec2(8.0)) / vec2(prec_scale);
-vec2 coords = UV * vec2(2.0) - vec2(1.0);
-
-coords += offset;
-coords /= upscale;
-if (coords.x < -1.0 || coords.y < -1.0 || coords.x > 1.0 || coords.y > 1.0) {
-	COLOR = vec4(0.0, 0.0, 0.0, 1.0);
-} else {
-	coords = (coords + vec2(1.0)) / vec2(2.0);
-	COLOR = tex(TEXTURE, coords);
-};
-",
-"fragment_ofs": 0,
-"light": "",
-"light_ofs": 0,
-"vertex": "",
-"vertex_ofs": 0
-}
-
-[sub_resource type="CanvasItemMaterial" id=6]
-
-shader/shader = SubResource( 5 )
-shader/shading_mode = 0
+shader_param/k1 = 0.22
+shader_param/k2 = 0.24
 shader_param/upscale = 1.0
-shader_param/prec_scale = 2.0
-
-[sub_resource type="CanvasItemShader" id=7]
-
-_code = {
-"fragment": "uniform texture offsetmap;
-uniform float upscale = 1.0;
-uniform float prec_scale = 2.0;
-
-vec4 normal;
-normal = tex(offsetmap, UV);
-
-// COLOR.b = ((offset.x * 16.0) + offset.y) / 255.0;
-normal.b *= 255.0; // 0.0 <-> 1.0 => 0 <-> 255
-vec2 offset = (vec2(normal.r + floor(normal.b / 16.0), normal.g + mod(normal.b, 16.0)) - vec2(8.0)) / vec2(prec_scale);
-vec2 coords = UV * vec2(2.0) - vec2(1.0);
-
-coords += offset;
-coords /= upscale;
-if (coords.x < -1.0 || coords.y < -1.0 || coords.x > 1.0 || coords.y > 1.0) {
-	COLOR = vec4(0.0, 0.0, 0.0, 1.0);
-} else {
-	coords = (coords + vec2(1.0)) / vec2(2.0);
-	COLOR = tex(TEXTURE, coords);
-};
-",
-"fragment_ofs": 0,
-"light": "",
-"light_ofs": 0,
-"vertex": "",
-"vertex_ofs": 0
-}
-
-[sub_resource type="CanvasItemMaterial" id=8]
-
-shader/shader = SubResource( 7 )
-shader/shading_mode = 0
-shader_param/upscale = 1.0
-shader_param/prec_scale = 2.0
 
 [node name="stereo_camera" type="Spatial"]
 
@@ -232,7 +128,6 @@ near = 0.1
 far = 400.0
 upscale = 1.0
 worldscale = 100.0
-prec_scale = 32.0
 
 [node name="left_camera_pos" type="Spatial" parent="."]
 
@@ -314,63 +209,15 @@ environment = null
 h_offset = 0.0
 v_offset = 0.0
 
-[node name="Viewport_left_lensmap" type="Viewport" parent="."]
-
-rect = Rect2( 0, 0, 1916, 2310 )
-own_world = false
-world = null
-transparent_bg = false
-render_target/enabled = true
-render_target/v_flip = false
-render_target/clear_on_new_frame = false
-render_target/filter = false
-render_target/gen_mipmaps = false
-render_target/update_mode = 1
-audio_listener/enable_2d = false
-audio_listener/enable_3d = false
-physics/object_picking = false
-gui/disable_input = false
-
-[node name="Generate_left_lens" type="Sprite" parent="Viewport_left_lensmap"]
-
-material/material = SubResource( 2 )
-transform/scale = Vector2( 1916, 2310 )
-texture = ExtResource( 2 )
-centered = false
-
-[node name="Viewport_right_lensmap" type="Viewport" parent="."]
-
-rect = Rect2( 0, 0, 1916, 2310 )
-own_world = false
-world = null
-transparent_bg = false
-render_target/enabled = true
-render_target/v_flip = false
-render_target/clear_on_new_frame = false
-render_target/filter = false
-render_target/gen_mipmaps = false
-render_target/update_mode = 1
-audio_listener/enable_2d = false
-audio_listener/enable_3d = false
-physics/object_picking = false
-gui/disable_input = false
-
-[node name="Generate_right_lens" type="Sprite" parent="Viewport_right_lensmap"]
-
-material/material = SubResource( 4 )
-transform/scale = Vector2( 1916, 2310 )
-texture = ExtResource( 2 )
-centered = false
-
 [node name="ViewportSprite_left" type="ViewportSprite" parent="."]
 
-material/material = SubResource( 6 )
+material/material = SubResource( 2 )
 viewport = NodePath("../Viewport_left")
 centered = false
 
 [node name="ViewportSprite_right" type="ViewportSprite" parent="."]
 
-material/material = SubResource( 8 )
+material/material = SubResource( 4 )
 transform/pos = Vector2( 1916, 0 )
 viewport = NodePath("../Viewport_right")
 centered = false
