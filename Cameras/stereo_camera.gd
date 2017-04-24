@@ -48,19 +48,19 @@ func get_right_viewport_offset():
 	
 func update_cams():
 	# note, aspect ratio of our screen is applied later, this is an approximation not adjusting for lens distortion
-	var left = -((lcd_width - eyes_distance) / 2.0) / lcd_dist
-	var right = (eyes_distance / 2.0) / lcd_dist
-	var top = (lcd_width / 4.0) / lcd_dist
+	var f1 = (eyes_distance / 2.0) / lcd_dist
+	var f2 = ((lcd_width - eyes_distance) / 2.0) / lcd_dist
+	var f3 = (lcd_width / 4.0) / lcd_dist
 	
 	# upscale our FOV
-	top *= upscale
-	var add_width = ((right - left) * (upscale - 1.0)) / 2.0
-	left -= add_width
-	right += add_width
+	f3 *= upscale
+	var add_width = ((f1 + f2) * (upscale - 1.0)) / 2.0
+	f1 += add_width
+	f2 += add_width
 	
 	# setup our projection	
-	left_eye.set_frustum(left, right, top, -top, near, far)
-	right_eye.set_frustum(-right, -left, top, -top, near, far)
+	left_eye.set_frustum(-f2, f1, f3, -f3, near, far)
+	right_eye.set_frustum(-f1, f2, f3, -f3, near, far)
 
 	# set our offset
 	left_cam_pos.set_translation(Vector3(-eyes_distance / (2.0 * worldscale), 0.0, 0.0))
