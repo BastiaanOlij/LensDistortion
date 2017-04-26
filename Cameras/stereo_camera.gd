@@ -5,13 +5,13 @@ extends Spatial
 # Should really build a list of common devices, details for Rift, Gear VR and Vive are readily available 
 
 # how far are our eyes apart (in CMs)?
-export var eyes_distance = 6.5
+export var iod = 6.5
 
 # how wide is our LCD screen (in CMs)?
 export var lcd_width = 10.5
 
-# how far is our LCD from our face (in CMs)?
-export var lcd_dist = 8.0
+# how far is our LCD from our lens (in CMs)?
+export var lcd_lens = 4.0
 
 # distortion constants, these are for DK1/DK2 rift
 export var k1 = 0.3358
@@ -40,17 +40,17 @@ var right_sprite = null
 
 var screen_divider = null
 
-func get_eye_distance():
-	return eyes_distance
+func get_iod():
+	return iod
 		
 func get_right_viewport_offset():
 	return right_sprite.get_offset().x
 	
 func update_cams():
 	# note, aspect ratio of our screen is applied later, this is an approximation not adjusting for lens distortion
-	var f1 = (eyes_distance / 2.0) / lcd_dist
-	var f2 = ((lcd_width - eyes_distance) / 2.0) / lcd_dist
-	var f3 = (lcd_width / 4.0) / lcd_dist
+	var f1 = (iod / 2.0) / (2.0 * lcd_lens)
+	var f2 = ((lcd_width - iod) / 2.0) / (2.0 * lcd_lens)
+	var f3 = (lcd_width / 4.0) / (2.0 * lcd_lens)
 	
 	# upscale our FOV
 	f3 *= upscale
@@ -58,34 +58,39 @@ func update_cams():
 	f1 += add_width
 	f2 += add_width
 	
+	# temporary workaround, as we're only applying our upscale to our X 
+	# our aspect ratio of our viewport changes. Upscale f3 a second time
+	# to compensate for that change.
+	f3 *= upscale
+	
 	# setup our projection	
 	left_eye.set_frustum(-f2, f1, f3, -f3, near, far)
 	right_eye.set_frustum(-f1, f2, f3, -f3, near, far)
 
 	# set our offset
-	left_cam_pos.set_translation(Vector3(-eyes_distance / (2.0 * worldscale), 0.0, 0.0))
-	right_cam_pos.set_translation(Vector3(eyes_distance / (2.0 * worldscale), 0.0, 0.0))
+	left_cam_pos.set_translation(Vector3(-iod / (2.0 * worldscale), 0.0, 0.0))
+	right_cam_pos.set_translation(Vector3(iod / (2.0 * worldscale), 0.0, 0.0))
 
 	# update our lens distortion
-	left_sprite.get_material().set_shader_param("screen_width_cm", lcd_width)
-	left_sprite.get_material().set_shader_param("ipd", eyes_distance)
+	left_sprite.get_material().set_shader_param("lcd_width", lcd_width)
+	left_sprite.get_material().set_shader_param("iod", iod)
 	left_sprite.get_material().set_shader_param("k1", k1)
 	left_sprite.get_material().set_shader_param("k2", k2)
 	left_sprite.get_material().set_shader_param("upscale", upscale)
 
-	right_sprite.get_material().set_shader_param("screen_width_cm", lcd_width)
-	right_sprite.get_material().set_shader_param("ipd", eyes_distance)
+	right_sprite.get_material().set_shader_param("lcd_width", lcd_width)
+	right_sprite.get_material().set_shader_param("iod", iod)
 	right_sprite.get_material().set_shader_param("k1", k1)
 	right_sprite.get_material().set_shader_param("k2", k2)
 	right_sprite.get_material().set_shader_param("upscale", upscale)
 	
-func set_camera(p_eye_distance, p_lcd_width, p_lcd_dist, p_k1, p_k2, p_upscale):
-	if ((eyes_distance == p_eye_distance) && (lcd_width == p_lcd_width) && (lcd_dist == p_lcd_dist) && (upscale == p_upscale)):
+func set_camera(p_iod, p_lcd_width, p_lcd_lens, p_k1, p_k2, p_upscale):
+	if ((iod == p_iod) && (lcd_width == p_lcd_width) && (lcd_lens == p_lcd_lens) && (upscale == p_upscale)):
 		return
 		
-	eyes_distance = p_eye_distance
+	iod = p_iod
 	lcd_width = p_lcd_width
-	lcd_dist = p_lcd_dist
+	lcd_lens = p_lcd_lens
 	k1 = p_k1
 	k2 = p_k2
 	upscale = p_upscale
@@ -99,18 +104,18 @@ func resize():
 		
 	# set our render buffer sizes
 	# note, we should upscale this using upscale however there is a bug in Godot 2.x
-	# that prevents us from doing so:
+	# that prevents us from doing so on our vertical axis:
 	# https://github.com/godotengine/godot/issues/8383
 	# In Godot 3.x we can change this
-	left_viewport.set_rect(Rect2(Vector2(0,0),target_size)) # target_size * upscale
-	right_viewport.set_rect(Rect2(Vector2(0,0),target_size)) # target_size * upscale
+	left_viewport.set_rect(Rect2(Vector2(0,0),Vector2(target_size.x * upscale, target_size.y))) # target_size * upscale
+	right_viewport.set_rect(Rect2(Vector2(0,0),Vector2(target_size.x * upscale, target_size.y))) # target_size * upscale
 	
 	# and set our viewport scale
 	left_sprite.get_material().set_shader_param("aspect_ratio", target_size.x/target_size.y)
-	left_sprite.set_scale(Vector2(1.0, 1.0))
+	left_sprite.set_scale(Vector2(1.0 / upscale, 1.0)) # Vector2(1.0 / upscale)
 	right_sprite.set_pos(Vector2(target_size.x,0))
 	right_sprite.get_material().set_shader_param("aspect_ratio", target_size.x/target_size.y)
-	right_sprite.set_scale(Vector2(1.0, 1.0))
+	right_sprite.set_scale(Vector2(1.0 / upscale, 1.0)) # Vector2(1.0 / upscale)
 	
 	# finally set our screen divider
 	screen_divider.set_pos(Vector2(target_size.x, 0.0))

@@ -36,7 +36,6 @@ shader/shader = SubResource( 1 )
 
 [node name="stereo_camera" parent="." instance=ExtResource( 1 )]
 
-lcd_width = 13.0
 k1 = 0.21
 k2 = 0.21
 upscale = 1.5

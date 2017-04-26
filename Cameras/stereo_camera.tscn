@@ -8,15 +8,15 @@
 _code = {
 "fragment": "// Distortion shader for our left eye
 
-uniform float screen_width_cm = 10.5;
-uniform float ipd = 6.5;
-uniform float k1 = 0.22;
-uniform float k2 = 0.24;
+uniform float lcd_width = 10.5;
+uniform float iod = 6.5;
+uniform float k1 = 0.21;
+uniform float k2 = 0.21;
 uniform float upscale = 1.0;
-float aspect_ratio = 667.0 / 750.0;
+uniform float aspect_ratio = 400.0 / 600.0;
 
 vec2 coords = (UV * vec2(2.0)) - vec2(1.0);
-vec2 eye_center = vec2(((-ipd / 2.0) + (screen_width_cm / 4.0)) / (screen_width_cm / 2.0), 0.0);
+vec2 eye_center = vec2(((-iod / 2.0) + (lcd_width / 4.0)) / (lcd_width / 2.0), 0.0);
 vec2 offset = coords - eye_center;
 
 // take aspect ratio into account
@@ -53,26 +53,27 @@ if (coords.x < -1.0 || coords.y < -1.0 || coords.x > 1.0 || coords.y > 1.0) {
 
 shader/shader = SubResource( 1 )
 shader/shading_mode = 0
-shader_param/screen_width_cm = 10.5
-shader_param/ipd = 6.5
+shader_param/lcd_width = 10.5
+shader_param/iod = 6.5
 shader_param/k1 = 0.22
 shader_param/k2 = 0.24
 shader_param/upscale = 1.0
+shader_param/aspect_ratio = 0.666667
 
 [sub_resource type="CanvasItemShader" id=3]
 
 _code = {
 "fragment": "// Distortion shader for our right eye
 
-uniform float screen_width_cm = 10.5;
-uniform float ipd = 6.5;
-uniform float k1 = 0.22;
-uniform float k2 = 0.24;
+uniform float lcd_width = 10.5;
+uniform float iod = 6.5;
+uniform float k1 = 0.21;
+uniform float k2 = 0.21;
 uniform float upscale = 1.0;
-float aspect_ratio = 667.0 / 750.0;
+uniform float aspect_ratio = 400.0 / 600.0;
 
 vec2 coords = UV * vec2(2.0) - vec2(1.0);
-vec2 eye_center = vec2(((ipd / 2.0) - (screen_width_cm / 4.0)) / (screen_width_cm / 2.0), 0.0);
+vec2 eye_center = vec2(((iod / 2.0) - (lcd_width / 4.0)) / (lcd_width / 2.0), 0.0);
 vec2 offset = coords - eye_center;
 
 // take aspect ratio into account
@@ -109,19 +110,20 @@ if (coords.x < -1.0 || coords.y < -1.0 || coords.x > 1.0 || coords.y > 1.0) {
 
 shader/shader = SubResource( 3 )
 shader/shading_mode = 0
-shader_param/screen_width_cm = 10.5
-shader_param/ipd = 6.5
+shader_param/lcd_width = 10.5
+shader_param/iod = 6.5
 shader_param/k1 = 0.22
 shader_param/k2 = 0.24
 shader_param/upscale = 1.0
+shader_param/aspect_ratio = 0.666667
 
 [node name="stereo_camera" type="Spatial"]
 
 _import_transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
 script/script = ExtResource( 1 )
-eyes_distance = 6.5
+iod = 6.5
 lcd_width = 10.5
-lcd_dist = 8.0
+lcd_lens = 4.0
 k1 = 0.01
 k2 = 0.01
 near = 0.1
